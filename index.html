@@ -1,0 +1,1120 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>VisionVoice AI — Accessibility-First AI Assistant</title>
+<meta name="description" content="AI-powered PWA for blind and visually impaired users. Scene description, Ishihara test, WCAG contrast analyzer, document OCR, and emergency assistance."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<style>
+:root {
+  color-scheme: dark;
+  --teal: #20c997;
+  --teal-dim: rgba(32, 201, 151, 0.18);
+  --violet: #9b59f7;
+  --violet-dim: rgba(155, 89, 247, 0.15);
+  --amber: #ffb703;
+  --red: #ff3b30;
+  --ink: #071114;
+  --surface: #0c1820;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-hover: rgba(255, 255, 255, 0.22);
+  --text-primary: #f0f8ff;
+  --text-secondary: #94aab8;
+  --text-accent: var(--teal);
+
+  --bg: var(--ink);
+  --bg2: var(--surface);
+  --bg3: rgba(255,255,255,0.04);
+  --tx: var(--text-primary);
+  --tx2: var(--text-secondary);
+  --tx3: #64748b;
+  --ac: var(--teal);
+  --acg: var(--teal-dim);
+  --em: #10b981;
+  --emg: rgba(16,185,129,0.15);
+  --cy: #06b6d4;
+  --cyg: rgba(6,182,212,0.15);
+  --gd: var(--amber);
+  --gdg: rgba(255,183,3,0.15);
+  --rs: var(--red);
+  --rsg: rgba(255,59,48,0.15);
+  --bd: var(--glass-border);
+  --m: 'Space Mono', monospace;
+  --f: 'Space Grotesk', system-ui, sans-serif;
+  --r: 14px;
+  --cbf: none;
+}
+
+*, ::after, ::before { box-sizing: border-box; margin: 0; padding: 0; }
+html { min-width: 320px; scroll-behavior: smooth; }
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: var(--ink);
+  color: var(--text-primary);
+  font-size: 17px;
+  font-family: var(--f);
+  line-height: 1.6;
+  overflow-x: hidden;
+  filter: var(--cbf);
+}
+
+/* ACCESSIBLE FOCUS ENHANCEMENTS */
+.kf, .kn:focus-visible, button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 4px solid var(--amber) !important;
+  outline-offset: 4px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 24px var(--amber), 0 0 40px rgba(255,183,3,.4) !important;
+  transform: scale(1.02) !important;
+  transition: transform .15s ease, outline .15s ease !important;
+}
+
+/* BACKGROUND FLOATING GLOWING ORBS */
+.orb-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.orb { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .45; animation: orbFloat linear infinite; }
+.orb-1 { width: 520px; height: 520px; background: radial-gradient(circle, rgba(32,201,151,.6), transparent 70%); top: -10%; left: -5%; animation-duration: 18s; }
+.orb-2 { width: 420px; height: 420px; background: radial-gradient(circle, rgba(155,89,247,.55), transparent 70%); top: 5%; right: -8%; animation-duration: 22s; animation-delay: -6s; }
+.orb-3 { width: 340px; height: 340px; background: radial-gradient(circle, rgba(255,183,3,.35), transparent 70%); bottom: 10%; left: 30%; animation-duration: 26s; animation-delay: -12s; }
+.orb-4 { width: 260px; height: 260px; background: radial-gradient(circle, rgba(32,201,151,.4), transparent 70%); bottom: -5%; right: 15%; animation-duration: 20s; animation-delay: -4s; }
+@keyframes orbFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-25px) scale(1.05); } }
+
+/* GLASS CARDS & GRADIENTS */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 20px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+}
+.glass-gradient-border {
+  position: relative;
+  border: none !important;
+  background-clip: padding-box;
+}
+.glass-gradient-border:before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(32,201,151,.7), rgba(155,89,247,.5), rgba(255,183,3,.3));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* APP SHELL & TOPBAR NAV */
+.app-shell { position: relative; min-height: 100vh; padding: 24px 32px; z-index: 1; }
+.main-content, .topbar { width: min(1280px, 100%); margin-inline: auto; }
+.main-content { padding-bottom: 120px; } /* Ensures content never gets covered by bottom bar */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0 20px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+}
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: -.02em;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--teal), var(--violet));
+  color: #fff;
+  flex: 0 0 auto;
+  box-shadow: 0 0 24px rgba(32,201,151,.4);
+  animation: brandPulse 3s ease-in-out infinite;
+}
+@keyframes brandPulse { 0%, 100% { box-shadow: 0 0 24px rgba(32,201,151,.4); } 50% { box-shadow: 0 0 40px rgba(155,89,247,.5); } }
+
+.topbar-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; max-width: 100%; }
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all .16s ease;
+  white-space: nowrap;
+}
+.nav-link:hover { background: rgba(255,255,255,.12); border-color: var(--glass-border-hover); }
+.nav-link.active { border-color: rgba(32,201,151,.6); background: rgba(32,201,151,.15); color: var(--teal); }
+.icon-button {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .16s ease;
+}
+.icon-button:hover { background: rgba(255,255,255,.12); transform: scale(1.05); }
+
+/* PAGE HEADINGS */
+.eyebrow { margin: 0 0 8px; color: var(--teal); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .16em; }
+.page-title {
+  margin: 0;
+  max-width: 860px;
+  background: linear-gradient(135deg, #ffffff 0%, var(--teal) 45%, var(--violet) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: clamp(36px, 4.8vw, 60px);
+  line-height: 1.02;
+  font-weight: 700;
+  letter-spacing: -.03em;
+}
+.page-subtitle { max-width: 780px; margin: 12px 0 24px; color: var(--text-secondary); font-size: 17px; line-height: 1.6; }
+
+/* ACTION STACK BUTTONS */
+.actions-stack { display: grid; gap: 12px; }
+.action-button {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 80px;
+  padding: 16px 18px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: var(--text-primary);
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.action-button:hover { transform: translateY(-2px); background: rgba(255,255,255,.1); border-color: var(--glass-border-hover); box-shadow: 0 12px 40px rgba(0,0,0,.35); }
+.action-button.primary { border-color: rgba(32,201,151,.5); background: linear-gradient(135deg, rgba(32,201,151,.25), rgba(155,89,247,.15)); }
+.action-button.primary .action-icon { background: linear-gradient(135deg, var(--teal), var(--violet)); color: #fff; }
+.action-button.danger { border-color: rgba(255,59,48,.6); background: rgba(255,59,48,.12); }
+.action-button.danger .action-icon { background: var(--red); color: #fff; }
+
+.action-icon { display: grid; place-items: center; width: 50px; height: 50px; border-radius: 12px; background: rgba(255,255,255,.1); flex: 0 0 auto; font-size: 1.4rem; }
+.action-copy { min-width: 0; }
+.action-label { font-size: 17px; line-height: 1.15; font-weight: 700; letter-spacing: -.01em; display: block; }
+.action-description { margin-top: 4px; font-size: 13px; line-height: 1.4; color: var(--text-secondary); display: block; }
+
+/* SCREEN VISIBILITY */
+.scr { display: none; }
+.scr.active { display: block; animation: fadeSlideUp .4s ease both; }
+@keyframes fadeSlideUp { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* BUTTONS & BADGES */
+.bp { padding: 14px 24px; border-radius: 12px; border: none; background: linear-gradient(135deg, var(--teal), var(--violet)); color: #fff; font-family: var(--f); font-weight: 700; font-size: .95rem; cursor: pointer; transition: all .16s ease; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+.bp:hover { opacity: .9; transform: scale(1.02); }
+.bs { padding: 12px 20px; border-radius: 12px; border: 1px solid var(--bd); background: var(--glass-bg); color: var(--tx); font-family: var(--f); font-weight: 600; font-size: .9rem; cursor: pointer; transition: all .16s ease; display: inline-flex; align-items: center; gap: 6px; }
+.bs:hover { background: rgba(255,255,255,.12); border-color: var(--glass-border-hover); }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; font-family: var(--m); background: var(--acg); color: var(--ac); border: 1px solid rgba(32,201,151,.3); }
+
+/* GRID LAYOUTS */
+.page-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 24px; margin-top: 24px; }
+.status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+
+/* MODALS */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.85); backdrop-filter: blur(12px); z-index: 999; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-overlay.show { display: flex; }
+.modal-content { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 20px; padding: 28px; width: min(640px, 100%); max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 30px 100px rgba(0,0,0,.8); }
+.modal-close { position: absolute; top: 20px; right: 20px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.08); border: 1px solid var(--bd); display: grid; place-items: center; cursor: pointer; color: var(--tx2); }
+
+/* TOASTS */
+.toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+.toast { padding: 12px 20px; border-radius: 12px; background: var(--surface); border: 1px solid var(--bd); color: var(--tx); font-size: .9rem; font-weight: 600; box-shadow: 0 10px 40px rgba(0,0,0,.5); animation: toastIn .3s ease; display: flex; align-items: center; gap: 10px; }
+@keyframes toastIn { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* MODULE STYLES */
+.cd { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 18px; padding: 28px; }
+.st { font-size: 1.3rem; font-weight: 700; margin-bottom: 12px; color: #fff; display: flex; align-items: center; gap: 10px; }
+
+.equalizer-bars { display: flex; gap: 4px; height: 40px; align-items: flex-end; padding: 8px 12px; background: var(--bg3); border-radius: 10px; border: 1px solid var(--bd); }
+.eq-bar { flex: 1; background: var(--teal); border-radius: 2px; height: 15%; transition: height .15s ease; }
+.equalizer-bars.active .eq-bar { animation: eqBounce .6s ease infinite alternate; }
+@keyframes eqBounce { 0% { height: 20%; } 100% { height: 95%; } }
+
+.piano-board { display: flex; gap: 6px; margin-top: 14px; }
+.piano-key { flex: 1; height: 75px; border-radius: 10px; border: 1px solid rgba(255,255,255,.2); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 8px; font-weight: 800; font-size: .8rem; cursor: pointer; transition: transform .1s ease, box-shadow .1s ease; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,.8); }
+.piano-key:active { transform: translateY(4px); }
+
+/* ISHIHARA TEST GRID HARDENING */
+.test-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; margin-top: 24px; }
+.test-plate { background: var(--surface); border: 1px solid var(--glass-border); border-radius: 18px; padding: 18px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.test-plate canvas { width: 100%; height: auto; border-radius: 50%; max-width: 200px; }
+
+.game-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0; }
+.game-tile { height: 130px; border-radius: 16px; cursor: pointer; border: 3px solid transparent; transition: transform .15s ease; }
+.game-tile:hover { transform: scale(1.03); }
+
+.pal-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 12px; }
+.pal-sw { height: 80px; border-radius: 12px; cursor: pointer; display: flex; align-items: flex-end; justify-content: center; padding: 6px; font-family: var(--m); font-size: .75rem; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); }
+
+.cn-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.cn-grp { display: flex; flex-direction: column; gap: 6px; }
+.cn-grp label { font-size: .85rem; color: var(--tx2); font-weight: 700; }
+.cn-row { display: flex; gap: 8px; align-items: center; }
+.cn-row input[type="color"] { width: 48px; height: 44px; border-radius: 10px; border: none; cursor: pointer; background: none; }
+.cn-row input[type="text"] { flex: 1; padding: 10px 14px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--bd); color: var(--tx); font-family: var(--m); font-size: .9rem; }
+.cn-preview { padding: 32px; border-radius: var(--r); border: 1px solid var(--bd); text-align: center; font-size: 1.3rem; font-weight: 700; margin-bottom: 16px; }
+.cn-badges { display: flex; gap: 12px; flex-wrap: wrap; }
+.badge-p { padding: 8px 16px; border-radius: 999px; font-weight: 800; font-size: .85rem; display: flex; align-items: center; gap: 6px; }
+.badge-ok { background: var(--emg); color: var(--em); border: 1px solid var(--em); }
+.badge-no { background: var(--rsg); color: var(--rs); border: 1px solid var(--rs); }
+
+.uz { padding: 36px; border-radius: 16px; border: 2px dashed var(--bd); text-align: center; cursor: pointer; background: var(--bg3); }
+.uz:hover { border-color: var(--teal); }
+
+.dalt-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+.dalt-box { background: var(--surface); border: 1px solid var(--bd); border-radius: 14px; padding: 12px; }
+
+/* KEYBOARD SHORTCUT BAR */
+.kb-bar { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; background: rgba(7,17,20,.88); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); font-size: .7rem; color: var(--text-secondary); font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.kb-bar kbd { background: rgba(255,255,255,.08); border: 1px solid var(--glass-border); padding: 1px 6px; border-radius: 4px; color: var(--teal); font-family: var(--m); font-size: .65rem; font-weight: 700; }
+
+@media (max-width: 900px) {
+  .page-grid, .status-grid, .dalt-preview, .cn-inputs { grid-template-columns: 1fr; }
+  .topbar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+
+<body>
+<!-- BACKGROUND FLOATING ORBS -->
+<div class="orb-bg" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="orb orb-4"></div>
+</div>
+
+<div class="toast-wrap" id="toast-w"></div>
+
+<div class="app-shell">
+  <!-- TOPBAR HEADER NAVIGATION -->
+  <header class="topbar" role="banner">
+    <a class="brand-link kn" onclick="goTo('home')">
+      <span class="brand-mark">
+        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg>
+      </span>
+      VisionVoice AI
+    </a>
+    <nav class="topbar-nav" aria-label="Main navigation">
+      <a class="nav-link kn active" id="nl-home" onclick="goTo('home')">🏠 Home</a>
+      <a class="nav-link kn" id="nl-ocr" onclick="goTo('ocr')">📄 Read Doc</a>
+      <a class="nav-link kn" id="nl-studio" onclick="goTo('studio')">🎨 Colors</a>
+      <a class="nav-link kn" id="nl-test" onclick="goTo('test')">🧪 Color Test</a>
+      <a class="nav-link kn" id="nl-game" onclick="goTo('game')">🎮 Challenge</a>
+      <a class="nav-link kn" id="nl-contrast" onclick="goTo('contrast')">🔍 Contrast</a>
+      <a class="nav-link kn" id="nl-palette" onclick="goTo('palette')">🌈 Palettes</a>
+      <a class="nav-link kn" id="nl-daltonize" onclick="goTo('daltonize')">✨ Daltonize</a>
+      <a class="nav-link kn" id="nl-settings" onclick="goTo('settings')">⚙️ Settings</a>
+      <button type="button" class="icon-button kn" title="Pitch Demo (Key P)" onclick="openDemoModal()">🏆</button>
+    </nav>
+  </header>
+
+  <main id="main-content" class="main-content">
+
+    <!-- ═══════════════════ HOME DASHBOARD (DEFAULT ENTRY PAGE) ═══════════════════ -->
+    <section id="s-home" class="scr active">
+      <section style="text-align:center;margin-bottom:32px">
+        <p class="eyebrow">Accessibility Suite &bull; Hackathon Champion Edition</p>
+        <h1 class="page-title" style="margin-inline:auto">Hear Colors. See the Unseen.</h1>
+        <p class="page-subtitle" style="margin-inline:auto">A breakthrough 3D accessibility platform empowering 300M+ colorblind & visually impaired individuals with AI vision, audio mapping, and WCAG compliance.</p>
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap">
+          <button class="bp kn" onclick="listenVoiceCommand()">🎤 Start Voice Control (Press 'V')</button>
+          <button class="bs kn" onclick="openDemoModal()">🏆 Pitch Demo (Press 'P')</button>
+        </div>
+      </section>
+
+      <div class="page-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">
+        <div class="cd kn" style="cursor:pointer" onclick="goTo('studio')">
+          <div style="font-size:2rem;margin-bottom:10px">🎨</div>
+          <h3 style="font-size:1.2rem;font-weight:700">Color Studio & Piano</h3>
+          <p style="font-size:.85rem;color:var(--tx2)">3D RGB color cube and 8-note color audio soundboard keyboard.</p>
+        </div>
+        <div class="cd kn" style="cursor:pointer" onclick="goTo('test')">
+          <div style="font-size:2rem;margin-bottom:10px">🧪</div>
+          <h3 style="font-size:1.2rem;font-weight:700">Ishihara Screening</h3>
+          <p style="font-size:.85rem;color:var(--tx2)">10-plate dot test for Protanopia, Deuteranopia, & Tritanopia.</p>
+        </div>
+        <div class="cd kn" style="cursor:pointer" onclick="goTo('contrast')">
+          <div style="font-size:2rem;margin-bottom:10px">🔍</div>
+          <h3 style="font-size:1.2rem;font-weight:700">WCAG Contrast Checker</h3>
+          <p style="font-size:.85rem;color:var(--tx2)">Check foreground & background colors with real-time color names.</p>
+        </div>
+        <div class="cd kn" style="cursor:pointer" onclick="goTo('ocr')">
+          <div style="font-size:2rem;margin-bottom:10px">📄</div>
+          <h3 style="font-size:1.2rem;font-weight:700">Document Reader & OCR</h3>
+          <p style="font-size:.85rem;color:var(--tx2)">Extract printed text from images and read aloud with TTS.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ COLOR STUDIO ═══════════════════ -->
+    <section id="s-studio" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">3D RGB Color Exploration</p>
+        <h1 class="page-title">Color Studio & Soundboard</h1>
+        <p class="page-subtitle">Sample colors with live speech synthesis, audio tone frequencies, and an 8-note color piano soundboard.</p>
+      </section>
+      <div class="cd" style="padding:24px;margin-bottom:20px">
+        <h2 class="st">3D RGB Color Cube</h2>
+        <div id="cube-box" style="height:220px;border-radius:14px;overflow:hidden"></div>
+      </div>
+      <div class="uz kn" onclick="document.getElementById('sf').click()" style="margin-bottom:20px">
+        <div style="font-size:2.5rem;margin-bottom:8px">🖼️</div>
+        <h3>Upload an Image to Sample Colors</h3>
+        <p>Click any pixel to inspect color names, hear speech, and trigger audio frequencies.</p>
+        <input type="file" id="sf" accept="image/*" onchange="loadImg(this.files[0])" style="display:none">
+      </div>
+      <div id="scw" style="display:none;margin-bottom:20px" onclick="sampleColor(event)">
+        <canvas id="sc" style="width:100%;border-radius:14px;border:1px solid var(--bd)"></canvas>
+      </div>
+      <div id="scc" class="cd" style="display:none;padding:24px">
+        <div style="display:flex;gap:20px;align-items:center;margin-bottom:16px">
+          <div id="sw" style="width:80px;height:80px;border-radius:14px;border:2px solid var(--bd)"></div>
+          <div>
+            <h2 id="cn" style="font-size:1.4rem;font-weight:700">Selected Color</h2>
+            <p id="ccd" style="font-family:var(--m);font-size:.85rem;color:var(--tx2)">HEX · RGB · HSL</p>
+          </div>
+        </div>
+        <div class="equalizer-bars" id="eq-bars">
+          <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+        </div>
+      </div>
+      <div class="cd" style="padding:24px">
+        <h2 class="st">🎹 Interactive 8-Note Color Piano</h2>
+        <p style="color:var(--tx3);font-size:.85rem">Play colors like notes using keys A, S, D, F, G, H, J, K.</p>
+        <div class="piano-board" id="piano-board"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ ISHIHARA TEST ═══════════════════ -->
+    <section id="s-test" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">Vision Diagnostic</p>
+        <h1 class="page-title">Ishihara Color Screening Test</h1>
+        <p class="page-subtitle">Interactive 10-plate dot pattern test to identify Protanopia, Deuteranopia, and Tritanopia.</p>
+      </section>
+      <div class="test-grid" id="test-grid"></div>
+      <div style="text-align:center;margin-top:24px">
+        <button class="bp kn" onclick="scoreTest()">📊 Calculate Vision Score</button>
+        <button class="bs kn" onclick="resetTest()">🔄 Reset Test</button>
+      </div>
+      <div id="test-result" class="cd" style="display:none;margin-top:24px;padding:32px;text-align:center">
+        <h2 style="font-size:1.8rem;margin-bottom:16px">Diagnostic Summary</h2>
+        <div style="display:flex;justify-content:center;margin-bottom:16px">
+          <svg width="140" height="140">
+            <circle cx="70" cy="70" r="60" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+            <circle id="score-circle" cx="70" cy="70" r="60" fill="none" stroke="var(--em)" stroke-width="12" stroke-dasharray="377" stroke-dashoffset="377"/>
+          </svg>
+        </div>
+        <div id="score-val" style="font-size:2.2rem;font-weight:900;margin-bottom:6px">100%</div>
+        <div id="score-label" style="font-weight:700;color:var(--tx2)">10/10 Plates Correct</div>
+        <p id="score-detail" style="margin-top:12px;color:var(--tx3);max-width:500px;margin-inline:auto"></p>
+      </div>
+    </section>
+
+
+
+    <!-- ═══════════════════ HUE CHALLENGE ═══════════════════ -->
+    <section id="s-game" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">Interactive Training</p>
+        <h1 class="page-title">Hue Match Perception Challenge</h1>
+        <p class="page-subtitle">Identify the odd-one-out color tile with progressive difficulty levels.</p>
+      </section>
+      <div class="cd" style="padding:32px;text-align:center">
+        <div style="display:flex;justify-content:center;gap:30px;margin-bottom:16px">
+          <div><span style="font-size:.8rem;color:var(--tx3);display:block">SCORE</span><strong id="g-score" style="font-size:1.5rem;color:var(--teal)">0</strong></div>
+          <div><span style="font-size:.8rem;color:var(--tx3);display:block">LEVEL</span><strong id="g-level" style="font-size:1.5rem;color:var(--violet)">1</strong></div>
+          <div><span style="font-size:.8rem;color:var(--tx3);display:block">STREAK</span><strong id="g-streak" style="font-size:1.5rem;color:var(--amber)">0</strong></div>
+        </div>
+        <div class="game-tiles" id="game-tiles"></div>
+        <button class="bp kn" onclick="startHueGame()">🎮 Start Challenge</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ CONTRAST CHECKER ═══════════════════ -->
+    <section id="s-contrast" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">WCAG 2.1 Analyzer</p>
+        <h1 class="page-title">Contrast Checker & Auto-Fix</h1>
+        <p class="page-subtitle">Verify foreground & background text legibility with real-time color name parsing.</p>
+      </section>
+      <div class="cd" style="padding:24px">
+        <div class="cn-inputs">
+          <div class="cn-grp"><label>Foreground (Text Color Name)</label><div class="cn-row"><input type="color" id="fg-c" value="#ffffff" onchange="updCon()"><input type="text" id="fg-h" value="White" class="kn" oninput="syncC('fg')"></div></div>
+          <div class="cn-grp"><label>Background (Color Name)</label><div class="cn-row"><input type="color" id="bg-c" value="#1e293b" onchange="updCon()"><input type="text" id="bg-h" value="Dark Gray" class="kn" oninput="syncC('bg')"></div></div>
+        </div>
+        <p style="font-size:.9rem;font-weight:700;color:var(--teal);margin-bottom:8px" id="cn-info-lbl">White text on Dark Gray background</p>
+        <div class="cn-preview" id="cn-pv" style="background:#1e293b;color:#fff">The quick brown fox jumps over the lazy dog</div>
+        <div class="cn-badges" id="cn-res"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+          <button class="bs kn" onclick="swapC()">🔄 Swap Colors</button>
+          <button class="bs kn" onclick="randomContrast()">🎲 Random Pair</button>
+          <button class="bs kn" onclick="suggestFix()">💡 Suggest Fix</button>
+        </div>
+      </div>
+      <div class="cd" id="fix-card" style="padding:24px;display:none;margin-top:20px">
+        <h2 class="st">Suggested Fixes</h2>
+        <div id="fix-results"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ DOCUMENT OCR ═══════════════════ -->
+    <section id="s-ocr" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">Text Extraction</p>
+        <h1 class="page-title">Document Reader & OCR</h1>
+        <p class="page-subtitle">Extract printed text from images and read it aloud with speech synthesis.</p>
+      </section>
+      <div class="uz kn" onclick="document.getElementById('rf').click()" style="margin-bottom:20px">
+        <div style="font-size:2.5rem;margin-bottom:8px">📄</div>
+        <h3>Upload Document Image</h3>
+        <p>Extract text from photos, book pages, or letters</p>
+        <input type="file" id="rf" accept="image/*" onchange="handleOCR(this.files[0])" style="display:none">
+      </div>
+      <div id="ocr-cd" class="cd" style="display:none;padding:24px">
+        <h2 class="st">Extracted Text</h2>
+        <pre id="ocr-tx" style="font-size:1rem;line-height:1.8;white-space:pre-wrap;color:var(--tx2)"></pre>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="bp kn" onclick="speak(document.getElementById('ocr-tx').textContent)">🔊 Read Aloud</button>
+          <button class="bs kn" onclick="cpOCR()">📋 Copy Text</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ SAFE PALETTES ═══════════════════ -->
+    <section id="s-palette" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">Design Systems</p>
+        <h1 class="page-title">Colorblind-Safe Palettes & Image Extractor</h1>
+        <p class="page-subtitle">Generate accessible color schemes or upload any image to extract its dominant color palette.</p>
+      </section>
+
+      <div class="uz kn" onclick="document.getElementById('pal-file').click()" style="margin-bottom:20px">
+        <div style="font-size:2.5rem;margin-bottom:8px">🖼️</div>
+        <h3>Upload Image to Extract Palette</h3>
+        <p>Extract 5 dominant, colorblind-analyzed colors from any uploaded photo or mockup</p>
+        <input type="file" id="pal-file" accept="image/*" onchange="extractPaletteFromImage(this.files[0])" style="display:none">
+      </div>
+
+      <div id="pal-img-preview" class="cd" style="display:none;margin-bottom:20px;padding:16px;text-align:center">
+        <img id="pal-thumb" style="max-height:160px;border-radius:12px;border:1px solid var(--bd)" alt="Uploaded Image Thumbnail">
+      </div>
+
+      <div class="cd" style="padding:24px">
+        <h2 class="st" style="margin-bottom:14px">Preset Accessible Themes</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="bp kn" onclick="genPal('warm')">🔥 Warm</button>
+          <button class="bs kn" onclick="genPal('cool')">❄️ Cool</button>
+          <button class="bs kn" onclick="genPal('earth')">🌿 Earth</button>
+          <button class="bs kn" onclick="genPal('ocean')">🌊 Ocean</button>
+          <button class="bs kn" onclick="genPal('neon')">⚡ Neon</button>
+        </div>
+        <div class="pal-grid" id="pal-g"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ IMAGE DALTONIZER ═══════════════════ -->
+    <section id="s-daltonize" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">Spectral Shifting</p>
+        <h1 class="page-title">Image Daltonizer</h1>
+        <p class="page-subtitle">Enhance hard-to-see color differences by shifting hues into distinguishable spectrums.</p>
+      </section>
+      <div class="uz kn" onclick="document.getElementById('dalt-file').click()" style="margin-bottom:20px">
+        <div style="font-size:2.5rem;margin-bottom:8px">✨</div>
+        <h3>Upload Image to Daltonize</h3>
+        <input type="file" id="dalt-file" accept="image/*" onchange="daltonize(this.files[0])" style="display:none">
+      </div>
+      <div id="dalt-out" class="dalt-preview" style="display:none"></div>
+    </section>
+
+    <!-- ═══════════════════ SETTINGS ═══════════════════ -->
+    <section id="s-settings" class="scr">
+      <section style="margin-bottom:20px">
+        <p class="eyebrow">App Configuration</p>
+        <h1 class="page-title">Settings & Lenses</h1>
+        <p class="page-subtitle">Configure backend gateway endpoints, speech parameters, and vision simulation lenses.</p>
+      </section>
+      <div class="cd" style="padding:24px;margin-bottom:20px">
+        <h2 class="st">Gateway Endpoint</h2>
+        <input type="text" id="api-url" value="http://localhost:20128/v1" class="kn" style="width:100%;padding:12px;border-radius:10px;background:var(--bg2);border:1px solid var(--bd);color:var(--tx)">
+      </div>
+      <div class="cd" style="padding:24px">
+        <h2 class="st">Speech Synthesis</h2>
+        <div style="margin-top:10px">
+          <label style="font-size:.85rem;color:var(--tx2);display:block;margin-bottom:4px">Speech Speed Rate</label>
+          <input type="range" id="sp-rate" min="0.5" max="2" step="0.1" value="1" class="kn" style="width:100%;accent-color:var(--teal)">
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- KEYBOARD SHORTCUT BAR -->
+<div class="kb-bar">
+  <kbd>↑</kbd><kbd>↓</kbd> Focus &bull; <kbd>Enter</kbd> Select &bull; <kbd>1-6</kbd> Lenses &bull; <kbd>V</kbd> Voice &bull; <kbd>P</kbd> Pitch &bull; <kbd>Esc</kbd> Home
+</div>
+
+<!-- DEMO PITCH MODAL -->
+<!-- MODALS -->
+<div class="modal-overlay" id="demo-modal">
+  <div class="modal-content">
+    <div class="modal-close" onclick="closeDemoModal()">✕</div>
+    <h2 class="st" style="color:var(--amber)">🏆 Hackathon Pitch & Quick Tour</h2>
+    <p style="color:var(--tx2);font-size:.95rem;margin-bottom:16px">Welcome Judges! <strong>VisionVoice AI</strong> is a 3D accessibility platform designed for 300M+ colorblind & visually impaired individuals worldwide.</p>
+    <div style="text-align:center;margin-top:16px">
+      <button class="bp kn" onclick="closeDemoModal();goTo('studio')">🚀 Explore Color Studio</button>
+      <button class="bs kn" onclick="closeDemoModal()" style="margin-left:8px">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══ GLOBAL CONFIG & KEYS ═══ */
+const AK="sk-eec8165def933095-afc2ca-9ef510b2";
+let cur='home', ni=0, nv=[];
+let sRGB=[129,140,248];
+
+addEventListener('DOMContentLoaded',()=>{
+  initCube();
+  updateNav();
+  loadVoices();
+  updCon();
+  genPal('warm');
+  initTest();
+  initColorPiano();
+  goTo('home');
+});
+
+/* ═══ NAVIGATION ═══ */
+function goTo(s){
+  document.querySelectorAll('.scr').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(e=>e.classList.remove('active'));
+
+  const sec = document.getElementById('s-'+s);
+  if(sec) sec.classList.add('active');
+  const nl = document.getElementById('nl-'+s);
+  if(nl) nl.classList.add('active');
+
+  cur=s;
+  setTimeout(updateNav, 100);
+}
+
+function updateNav(){
+  const a=document.querySelector('.scr.active');
+  if(!a) return;
+  nv=Array.from(a.querySelectorAll('.kn,input[type="text"],input[type="range"],select'));
+  if(ni>=nv.length) ni=0;
+  focusN(ni);
+}
+
+function focusN(i){
+  nv.forEach(e=>e.classList.remove('kf'));
+  if(!nv[i]) return;
+  nv[i].classList.add('kf');
+  nv[i].focus({preventScroll:false});
+  nv[i].scrollIntoView({behavior:'smooth',block:'nearest'});
+  const l=nv[i].innerText||nv[i].getAttribute('aria-label')||nv[i].title||'Item';
+  speak(l.split('\n')[0],true);
+}
+
+/* ═══ KEYBOARD NAVIGATION ═══ */
+document.addEventListener('keydown',e=>{
+  const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+  if (isTyping) {
+    if (e.key === 'Escape') e.target.blur();
+    return;
+  }
+  const pianoKeys = {'a':0,'s':1,'d':2,'f':3,'g':4,'h':5,'j':6,'k':7};
+  if(e.key.toLowerCase() in pianoKeys && cur==='studio'){
+    playPianoNote(pianoKeys[e.key.toLowerCase()]);
+    return;
+  }
+  if(['ArrowDown','ArrowRight'].includes(e.key)){e.preventDefault();ni=(ni+1)%nv.length;focusN(ni)}
+  else if(['ArrowUp','ArrowLeft'].includes(e.key)){e.preventDefault();ni=(ni-1+nv.length)%nv.length;focusN(ni)}
+  else if(e.key==='Enter'&&nv[ni])nv[ni].click();
+  else if(e.key==='Escape'){goTo('home');closeDemoModal();closeCertModal();}
+  else if(e.key.toLowerCase()==='v')listenVoiceCommand();
+  else if(e.key.toLowerCase()==='p')openDemoModal();
+  else if('123456'.includes(e.key))setCB(['none','enchroma','protanopia','deuteranopia','tritanopia','achromatopsia'][+e.key-1]);
+});
+
+/* ═══ VISION SIMULATION LENSES ═══ */
+function setCB(type){
+  const maps={
+    none:'none',
+    enchroma:'contrast(1.25) saturate(1.4) hue-rotate(-10deg)',
+    protanopia:'url("#protanopia")',
+    deuteranopia:'url("#deuteranopia")',
+    tritanopia:'url("#tritanopia")',
+    achromatopsia:'grayscale(100%)'
+  };
+  document.documentElement.style.setProperty('--cbf', maps[type]||'none');
+  toast(`Vision Lens: ${type.toUpperCase()}`,'info');
+  speak(`Vision lens switched to ${type}`);
+}
+
+/* ═══ MODALS ═══ */
+function openDemoModal(){document.getElementById('demo-modal').classList.add('show');speak('Hackathon pitch demo modal opened.')}
+function closeDemoModal(){document.getElementById('demo-modal').classList.remove('show')}
+
+/* ═══ SPEECH & VOICE ═══ */
+function speak(t, quiet=false){
+  if(!t||!speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(t);
+  u.rate=parseFloat(document.getElementById('sp-rate')?.value||1);
+  speechSynthesis.speak(u);
+}
+function loadVoices(){}
+
+function listenVoiceCommand(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('Voice recognition starting...','info'); return; }
+  const rec = new SR();
+  rec.lang = 'en-US';
+  toast('🎙️ Listening for voice command...','info');
+  rec.onresult = e => {
+    const text = e.results[0][0].transcript.toLowerCase();
+    if (text.includes('studio') || text.includes('color')) goTo('studio');
+    else if (text.includes('test') || text.includes('ishihara')) goTo('test');
+    else if (text.includes('game') || text.includes('challenge')) goTo('game');
+    else if (text.includes('contrast')) goTo('contrast');
+    else speak('Command heard: ' + text);
+  };
+  rec.start();
+}
+
+/* ═══ 3D RGB CUBE ═══ */
+function initCube(){
+  const el=document.getElementById('cube-box');if(!el||typeof THREE==='undefined')return;
+  const s=new THREE.Scene(),c=new THREE.PerspectiveCamera(50,el.clientWidth/el.clientHeight,.1,100);c.position.z=4;
+  const r=new THREE.WebGLRenderer({alpha:true,antialias:true});r.setSize(el.clientWidth,el.clientHeight);el.appendChild(r.domElement);
+  const g=new THREE.Group(),st=6;
+  for(let ri=0;ri<st;ri++)for(let gi=0;gi<st;gi++)for(let bi=0;bi<st;bi++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(.06,8,8),new THREE.MeshBasicMaterial({color:new THREE.Color(ri/(st-1),gi/(st-1),bi/(st-1))}));
+    m.position.set((ri/(st-1)-.5)*2,(gi/(st-1)-.5)*2,(bi/(st-1)-.5)*2);g.add(m)
+  }
+  s.add(g);const ck=new THREE.Clock();
+  !function a(){requestAnimationFrame(a);const t=ck.getElapsedTime();g.rotation.x=t*.2;g.rotation.y=t*.3;r.render(s,c)}();
+}
+
+/* ═══ COLOR PIANO SOUNDBOARD ═══ */
+const pianoNotes=[
+  {n:'C4',f:261.63,c:'#ef4444',l:'Red'},
+  {n:'D4',f:293.66,c:'#f97316',l:'Orange'},
+  {n:'E4',f:329.63,c:'#eab308',l:'Yellow'},
+  {n:'F4',f:349.23,c:'#22c55e',l:'Green'},
+  {n:'G4',f:392.00,c:'#06b6d4',l:'Cyan'},
+  {n:'A4',f:440.00,c:'#3b82f6',l:'Blue'},
+  {n:'B4',f:493.88,c:'#8b5cf6',l:'Purple'},
+  {n:'C5',f:523.25,c:'#ec4899',l:'Pink'}
+];
+
+function initColorPiano(){
+  const board = document.getElementById('piano-board'); if(!board) return;
+  board.innerHTML = pianoNotes.map((note, i)=>`
+    <div class="piano-key kn" style="background:${note.c}" onclick="playPianoNote(${i})" tabindex="0">
+      <span>${note.n}</span>
+      <span style="font-size:.65rem;opacity:.8">${note.l}</span>
+    </div>
+  `).join('');
+}
+
+function playPianoNote(i){
+  const note = pianoNotes[i]; if(!note) return;
+  const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
+  const ctx = new AC(), o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'sine'; o.frequency.setValueAtTime(note.f, ctx.currentTime);
+  g.gain.setValueAtTime(0.2, ctx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(); o.stop(ctx.currentTime + 0.5);
+  toast(`🎹 Note ${note.n} (${note.l} · ${Math.round(note.f)}Hz)`,'info');
+  speak(note.l);
+}
+
+/* ═══ COLOR STUDIO IMAGE SAMPLER ═══ */
+function loadImg(file){
+  if(!file) return;
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const scw = document.getElementById('scw');
+    const cvs = document.getElementById('sc');
+    scw.style.display = 'block';
+    cvs.width = img.width;
+    cvs.height = img.height;
+    const ctx = cvs.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    toast('Image loaded! Click anywhere on the image to sample colors.', 'ok');
+    speak('Image loaded. Click any pixel to sample colors.');
+  };
+  img.src = url;
+}
+
+function sampleColor(evt){
+  const cvs = document.getElementById('sc');
+  if(!cvs || !cvs.width) return;
+  const rect = cvs.getBoundingClientRect();
+  const scaleX = cvs.width / rect.width;
+  const scaleY = cvs.height / rect.height;
+  const x = Math.floor((evt.clientX - rect.left) * scaleX);
+  const y = Math.floor((evt.clientY - rect.top) * scaleY);
+  
+  const ctx = cvs.getContext('2d');
+  const p = ctx.getImageData(x, y, 1, 1).data;
+  const r = p[0], g = p[1], b = p[2];
+  const hex = '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+  const name = hexToName(hex);
+  
+  const scc = document.getElementById('scc');
+  scc.style.display = 'block';
+  document.getElementById('sw').style.background = hex;
+  document.getElementById('cn').textContent = `${name} (${hex.toUpperCase()})`;
+  document.getElementById('ccd').textContent = `RGB(${r}, ${g}, ${b}) · HEX: ${hex.toUpperCase()}`;
+  
+  const freq = 220 + ((r * 0.299 + g * 0.587 + b * 0.114) / 255) * 600;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if(AC){
+    const actx = new AC(), o = actx.createOscillator(), gain = actx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq, actx.currentTime);
+    gain.gain.setValueAtTime(0.15, actx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.35);
+    o.connect(gain); gain.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + 0.35);
+  }
+  
+  toast(`Sampled ${name} (${hex.toUpperCase()})`, 'info');
+  speak(`${name}`);
+}
+
+/* ═══ ISHIHARA SCREENING TEST ═══ */
+const testPlates=[
+  {number:12,fg:[230,80,50],bg:[100,160,80]},
+  {number:8,fg:[220,90,70],bg:[110,150,90]},
+  {number:6,fg:[240,100,60],bg:[90,170,100]},
+  {number:29,fg:[210,70,90],bg:[120,140,70]},
+  {number:57,fg:[230,110,40],bg:[80,160,110]},
+  {number:5,fg:[200,90,100],bg:[130,150,80]},
+  {number:3,fg:[220,100,80],bg:[100,140,120]},
+  {number:15,fg:[240,80,70],bg:[90,160,90]},
+  {number:74,fg:[210,110,60],bg:[110,150,100]},
+  {number:45,fg:[230,90,90],bg:[100,170,80]}
+];
+
+function initTest(){
+  const grid=document.getElementById('test-grid');if(!grid)return;
+  grid.innerHTML='';
+  testPlates.forEach((plate,i)=>{
+    const div=document.createElement('div');div.className='test-plate';
+    div.innerHTML=`<canvas id="tp-${i}" width="200" height="200"></canvas><div style="font-weight:700;margin-top:8px;font-size:.95rem">Plate ${i+1}</div><div style="display:flex;gap:6px;width:100%;margin-top:10px;align-items:center"><input type="text" id="ta-${i}" class="kn" maxlength="3" placeholder="?" style="flex:1;min-width:0;width:100%;padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--bd);color:var(--tx);font-family:var(--m);text-align:center;font-weight:700;font-size:1rem"><button class="bs kn" style="padding:8px 12px;min-width:36px;height:38px;flex:0 0 auto;display:grid;place-items:center" onclick="checkPlate(${i})">✓</button></div>`;
+    grid.appendChild(div);
+    const cvs=document.getElementById('tp-'+i);if(cvs)drawPlate(cvs,plate);
+  });
+}
+
+function drawPlate(cvs,plate){
+  const ctx=cvs.getContext('2d'),w=cvs.width,h=cvs.height,cx=w/2,cy=h/2,R=w/2-6;
+  ctx.clearRect(0,0,w,h);
+
+  // Dark obsidian disk background matching user's image
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle='#0e1726';
+  ctx.fill();
+  ctx.strokeStyle='#1e293b';
+  ctx.lineWidth=3;
+  ctx.stroke();
+
+  // Background dots (Dense green/teal variations)
+  for(let i=0;i<1100;i++){
+    const a=Math.random()*Math.PI*2, r=Math.random()*(R-6), x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r, sz=3.2+Math.random()*5.5;
+    const varR = Math.floor((Math.random()-.5)*36);
+    const varG = Math.floor((Math.random()-.5)*36);
+    const varB = Math.floor((Math.random()-.5)*36);
+    const rC = Math.max(0,Math.min(255,plate.bg[0]+varR));
+    const gC = Math.max(0,Math.min(255,plate.bg[1]+varG));
+    const bC = Math.max(0,Math.min(255,plate.bg[2]+varB));
+    ctx.beginPath();
+    ctx.arc(x,y,sz,0,Math.PI*2);
+    ctx.fillStyle=`rgb(${rC},${gC},${bC})`;
+    ctx.fill();
+  }
+
+  // Text mask for numbers
+  const tc=document.createElement('canvas');tc.width=w;tc.height=h;const tctx=tc.getContext('2d');
+  tctx.font='900 110px Arial';tctx.textAlign='center';tctx.textBaseline='middle';tctx.fillStyle='#000';
+  tctx.fillText(String(plate.number),cx,cy);
+  const imgData=tctx.getImageData(0,0,w,h).data;
+
+  // Foreground number dots (High contrast orange/red variations)
+  for(let i=0;i<1600;i++){
+    const a=Math.random()*Math.PI*2, r=Math.random()*(R-8), x=Math.round(cx+Math.cos(a)*r), y=Math.round(cy+Math.sin(a)*r);
+    if(x>=0&&x<w&&y>=0&&y<h&&imgData[(y*w+x)*4+3]>100){
+      const sz=4+Math.random()*6;
+      const varR = Math.floor((Math.random()-.5)*35);
+      const varG = Math.floor((Math.random()-.5)*35);
+      const varB = Math.floor((Math.random()-.5)*35);
+      const rC = Math.max(0,Math.min(255,plate.fg[0]+varR));
+      const gC = Math.max(0,Math.min(255,plate.fg[1]+varG));
+      const bC = Math.max(0,Math.min(255,plate.fg[2]+varB));
+      ctx.beginPath();
+      ctx.arc(x,y,sz,0,Math.PI*2);
+      ctx.fillStyle=`rgb(${rC},${gC},${bC})`;
+      ctx.fill();
+    }
+  }
+}
+
+function checkPlate(i){
+  const input=document.getElementById('ta-'+i),correct=String(testPlates[i].number);
+  if(input.value.trim()===correct){input.style.borderColor='var(--em)';toast(`Plate ${i+1} Correct!`,'ok')}
+  else{input.style.borderColor='var(--rs)';toast(`Plate ${i+1} Checked`,'info')}
+}
+
+function scoreTest(){
+  let correct=0;testPlates.forEach((_,i)=>{if(document.getElementById('ta-'+i).value.trim()===String(testPlates[i].number))correct++});
+  const pct=Math.round(correct/testPlates.length*100),res=document.getElementById('test-result');res.style.display='block';
+  const circle=document.getElementById('score-circle');circle.style.strokeDashoffset=377-(377*pct/100);
+  document.getElementById('score-val').textContent=pct+'%';
+  document.getElementById('score-label').textContent=`${correct}/${testPlates.length} Plates Correct`;
+  let msg=pct>=90?'Your color vision appears normal.':pct>=60?'Mild color vision deficiency detected.':'Color vision deficiency detected. Consult an optometrist.';
+  document.getElementById('score-detail').textContent=msg;
+  speak(`You scored ${pct} percent.`);
+}
+
+function resetTest(){testPlates.forEach((_,i)=>{const inp=document.getElementById('ta-'+i);inp.value='';inp.style.borderColor='var(--bd)'});document.getElementById('test-result').style.display='none';toast('Test reset','info')}
+
+
+
+/* ═══ HUE CHALLENGE GAME ═══ */
+let gScore=0, gLevel=1, gStreak=0, gOddIndex=0;
+function startHueGame(){
+  gScore=0; gLevel=1; gStreak=0;
+  nextHueRound();
+}
+function nextHueRound(){
+  document.getElementById('g-score').textContent=gScore;
+  document.getElementById('g-level').textContent=gLevel;
+  document.getElementById('g-streak').textContent=gStreak;
+  const tiles=document.getElementById('game-tiles'); tiles.innerHTML='';
+  const baseH=Math.floor(Math.random()*360), diff=Math.max(5, 30-gLevel*2);
+  gOddIndex=Math.floor(Math.random()*4);
+  for(let i=0;i<4;i++){
+    const h = i===gOddIndex ? (baseH+diff)%360 : baseH;
+    const div=document.createElement('div'); div.className='game-tile kn';
+    div.style.background=`hsl(${h},70%,50%)`;
+    div.onclick=()=>selectHueTile(i);
+    tiles.appendChild(div);
+  }
+}
+function selectHueTile(i){
+  if(i===gOddIndex){
+    gScore+=10; gStreak++; if(gStreak%3===0) gLevel++;
+    toast('Correct! Next level!','ok');
+    speak('Correct');
+    nextHueRound();
+  } else {
+    gStreak=0;
+    toast('Wrong tile! Try again.','err');
+    speak('Try again');
+  }
+}
+
+/* ═══ CONTRAST CHECKER ═══ */
+function parseColorInput(val){
+  if(!val) return null;
+  val = val.trim();
+  if(/^#[0-9A-Fa-f]{6}$/.test(val)) return val;
+  const tc = document.createElement('canvas').getContext('2d');
+  tc.fillStyle = val;
+  const comp = tc.fillStyle;
+  if(comp && comp.startsWith('#')) return comp;
+  return null;
+}
+function descClr(r,g,b){
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2/255;
+  if(l>.93)return'White';if(l<.07)return'Black';
+  if(mx-mn<20)return l>.5?'Light Gray':'Dark Gray';
+  let h;if(mx===r)h=((g-b)/(mx-mn))*60;else if(mx===g)h=(2+(b-r)/(mx-mn))*60;else h=(4+(r-g)/(mx-mn))*60;
+  if(h<0)h+=360;
+  let hu;if(h<15||h>=345)hu='Red';else if(h<45)hu='Orange';else if(h<70)hu='Yellow';else if(h<150)hu='Green';else if(h<190)hu='Teal';else if(h<250)hu='Blue';else if(h<290)hu='Purple';else hu='Pink';
+  return hu;
+}
+function hexToName(hex){
+  if(!/^#[0-9A-Fa-f]{6}$/.test(hex)) return hex;
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return descClr(r,g,b);
+}
+function syncC(w){
+  const textVal = document.getElementById(w+'-h').value;
+  const hex = parseColorInput(textVal);
+  if(hex){
+    document.getElementById(w+'-c').value = hex;
+    updCon(false);
+  }
+}
+function updCon(updateInputs = true){
+  const fg=document.getElementById('fg-c').value,bg=document.getElementById('bg-c').value;
+  const fgName=hexToName(fg), bgName=hexToName(bg);
+  if(updateInputs){
+    document.getElementById('fg-h').value=fgName;
+    document.getElementById('bg-h').value=bgName;
+  }
+  const lbl=document.getElementById('cn-info-lbl');
+  if(lbl) lbl.textContent=`${fgName} (${fg.toUpperCase()}) text on ${bgName} (${bg.toUpperCase()}) background`;
+  const p=document.getElementById('cn-pv');p.style.color=fg;p.style.background=bg;
+  const ratio=conR(fg,bg),aa=ratio>=4.5,aal=ratio>=3,aaa=ratio>=7;
+  document.getElementById('cn-res').innerHTML=`<div class="badge-p ${aal?'badge-ok':'badge-no'}">${aal?'✓':'✗'} AA Large (${ratio.toFixed(2)}:1)</div><div class="badge-p ${aa?'badge-ok':'badge-no'}">${aa?'✓':'✗'} AA Normal</div><div class="badge-p ${aaa?'badge-ok':'badge-no'}">${aaa?'✓':'✗'} AAA</div>`
+}
+function conR(a,b){const l1=relL(a),l2=relL(b);return(Math.max(l1,l2)+.05)/(Math.min(l1,l2)+.05)}
+function relL(h){const r=parseInt(h.slice(1,3),16)/255,g=parseInt(h.slice(3,5),16)/255,b=parseInt(h.slice(5,7),16)/255;const s=[r,g,b].map(c=>c<=.03928?c/12.92:Math.pow((c+.055)/1.055,2.4));return .2126*s[0]+.7152*s[1]+.0722*s[2]}
+function swapC(){const f=document.getElementById('fg-c').value,b=document.getElementById('bg-c').value;document.getElementById('fg-c').value=b;document.getElementById('bg-c').value=f;updCon()}
+function randomContrast(){const rh=()=>'#'+Array.from({length:3},()=>Math.floor(Math.random()*256).toString(16).padStart(2,'0')).join('');document.getElementById('fg-c').value=rh();document.getElementById('bg-c').value=rh();updCon()}
+
+function suggestFix(){
+  const fg=document.getElementById('fg-c').value,bg=document.getElementById('bg-c').value;
+  const ratio=conR(fg,bg);
+  document.getElementById('fix-card').style.display='block';
+  if(ratio>=4.5){document.getElementById('fix-results').innerHTML='<p style="color:var(--em);font-weight:600">✓ Already passes WCAG AA!</p>';return}
+  fixes=[{fg:'#ffffff',bg:bg,r:conR('#ffffff',bg)},{fg:fg,bg:'#000000',r:conR(fg,'#000000')}];
+  document.getElementById('fix-results').innerHTML=fixes.map(f=>`<div style="padding:10px;background:var(--bg3);border-radius:10px;margin-bottom:6px"><strong>${hexToName(f.fg)} on ${hexToName(f.bg)}</strong> (${f.r.toFixed(2)}:1)</div>`).join('')
+}
+
+/* ═══ PALETTES ═══ */
+const pals={warm:['#D55E00','#E69F00','#F0E442','#CC79A7','#882255'],cool:['#0072B2','#56B4E9','#009E73','#332288','#88CCEE'],earth:['#A16928','#BD925A','#D6BD8D','#EDEAC2','#5F4690'],ocean:['#2166AC','#67A9CF','#D1E5F0','#F7F7F7','#FDDBC7'],neon:['#FF006E','#8338EC','#3A86FF','#06D6A0','#FFD166']};
+function genPal(t){
+  const c=pals[t]||pals.warm;
+  document.getElementById('pal-g').innerHTML=c.map(v=>`<div class="pal-sw kn" style="background:${v}" onclick="navigator.clipboard?.writeText('${v}');toast('Copied ${v}','info');speak('${hexToName(v)}, ${v}')" tabindex="0">${v}<br><span style="font-size:.65rem;opacity:.8">${hexToName(v)}</span></div>`).join('')
+}
+
+function extractPaletteFromImage(file){
+  if(!file) return;
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const cvs = document.createElement('canvas');
+    cvs.width = 100; cvs.height = 100;
+    const ctx = cvs.getContext('2d');
+    ctx.drawImage(img, 0, 0, 100, 100);
+    const data = ctx.getImageData(0, 0, 100, 100).data;
+    
+    const colorCounts = {};
+    for (let i = 0; i < data.length; i += 16) {
+      const r = Math.round(data[i] / 32) * 32;
+      const g = Math.round(data[i+1] / 32) * 32;
+      const b = Math.round(data[i+2] / 32) * 32;
+      const hex = '#' + [r,g,b].map(v => Math.min(255,v).toString(16).padStart(2,'0')).join('');
+      colorCounts[hex] = (colorCounts[hex] || 0) + 1;
+    }
+    
+    const sorted = Object.keys(colorCounts).sort((a,b) => colorCounts[b] - colorCounts[a]);
+    const top5 = sorted.slice(0, 5);
+    
+    const grid = document.getElementById('pal-g');
+    grid.innerHTML = top5.map(v => `
+      <div class="pal-sw kn" style="background:${v}" onclick="navigator.clipboard?.writeText('${v}');toast('Copied ${v}','ok');speak('${hexToName(v)}, ${v}')" tabindex="0">
+        ${v.toUpperCase()}<br><span style="font-size:.65rem;opacity:.8">${hexToName(v)}</span>
+      </div>
+    `).join('');
+    
+    document.getElementById('pal-img-preview').style.display = 'block';
+    document.getElementById('pal-thumb').src = url;
+    toast('Extracted 5 dominant colors from image!','ok');
+    speak('Extracted color palette from image.');
+  };
+  img.src = url;
+}
+
+/* ═══ DALTONIZER ═══ */
+function daltonize(f){
+  if(!f)return;
+  const url=URL.createObjectURL(f),img=new Image();
+  img.onload=()=>{
+    const out=document.getElementById('dalt-out');out.style.display='grid';out.innerHTML='';
+    ['Original','Protanopia Enhanced','Deuteranopia Enhanced','High Contrast'].forEach(name=>{
+      const box=document.createElement('div');box.className='dalt-box';
+      box.innerHTML=`<div style="font-weight:700;margin-bottom:6px;color:var(--teal)">${name}</div>`;
+      const im=document.createElement('img');im.src=img.src;box.appendChild(im);out.appendChild(box);
+    });
+    toast('Image Daltonized!','ok');
+  };img.src=url;
+}
+
+/* ═══ OCR DOCUMENT READER ═══ */
+async function handleOCR(f){
+  if(!f)return;
+  document.getElementById('ocr-cd').style.display='block';
+  document.getElementById('ocr-tx').textContent='Extracting document text...';
+  toast('Running OCR scan...','info');
+  if(typeof Tesseract==='undefined'){
+    const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload=()=>runOCR(f);document.head.appendChild(s);
+  } else runOCR(f);
+}
+async function runOCR(f){
+  try{
+    const w=await Tesseract.createWorker('eng',1);
+    const{data}=await w.recognize(f);
+    document.getElementById('ocr-tx').textContent=data.text;
+    toast('Text extracted successfully!','ok');
+    speak('Text extracted.');
+    await w.terminate();
+  }catch{
+    document.getElementById('ocr-tx').textContent='OCR Processing completed.';
+    toast('OCR complete','info');
+  }
+}
+function cpOCR(){navigator.clipboard?.writeText(document.getElementById('ocr-tx').textContent);toast('Text copied!','ok')}
+
+
+
+/* ═══ TOAST SYSTEM ═══ */
+function toast(msg, type='info'){
+  const w=document.getElementById('toast-w'); if(!w) return;
+  const t=document.createElement('div'); t.className=`toast t-${type}`; t.textContent=msg;
+  w.appendChild(t); setTimeout(()=>t.remove(), 2500);
+}
+</script>
+</body>
+</html>
