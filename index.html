@@ -318,6 +318,19 @@ button:focus-visible, a:focus-visible {
 </head>
 
 <body>
+<!-- SVG COLOR MATRIX FILTERS FOR VISION SIMULATOR LENSES -->
+<svg style="display:none;" xmlns="http://www.w3.org/2000/svg">
+  <filter id="protanopia">
+    <feColorMatrix type="matrix" values="0.56667, 0.43333, 0, 0, 0   0.55833, 0.44167, 0, 0, 0   0, 0.24167, 0.75833, 0, 0   0, 0, 0, 1, 0"/>
+  </filter>
+  <filter id="deuteranopia">
+    <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0   0.7, 0.3, 0, 0, 0   0, 0.3, 0.7, 0, 0   0, 0, 0, 1, 0"/>
+  </filter>
+  <filter id="tritanopia">
+    <feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0   0, 0.43333, 0.56667, 0, 0   0, 0.475, 0.525, 0, 0   0, 0, 0, 1, 0"/>
+  </filter>
+</svg>
+
 <!-- BACKGROUND FLOATING ORBS -->
 <div class="orb-bg" aria-hidden="true">
   <div class="orb orb-1"></div>
@@ -782,6 +795,12 @@ function initCube(){
     m.position.set((ri/(st-1)-.5)*2,(gi/(st-1)-.5)*2,(bi/(st-1)-.5)*2);g.add(m)
   }
   s.add(g);const ck=new THREE.Clock();
+  window.addEventListener('resize', ()=>{
+    if(!el||!el.clientHeight) return;
+    c.aspect = el.clientWidth / el.clientHeight;
+    c.updateProjectionMatrix();
+    r.setSize(el.clientWidth, el.clientHeight);
+  });
   !function a(){requestAnimationFrame(a);const t=ck.getElapsedTime();g.rotation.x=t*.2;g.rotation.y=t*.3;r.render(s,c)}();
 }
 
@@ -810,7 +829,9 @@ function initColorPiano(){
 function playPianoNote(i){
   const note = pianoNotes[i]; if(!note) return;
   const AC = window.AudioContext || window.webkitAudioContext; if(!AC) return;
-  const ctx = new AC(), o = ctx.createOscillator(), g = ctx.createGain();
+  const ctx = new AC();
+  if (ctx.state === 'suspended') ctx.resume();
+  const o = ctx.createOscillator(), g = ctx.createGain();
   o.type = 'sine'; o.frequency.setValueAtTime(note.f, ctx.currentTime);
   g.gain.setValueAtTime(0.2, ctx.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
