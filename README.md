@@ -20,17 +20,10 @@
    - Live color name text parser resolving typed color names (e.g. `red`, `navy`, `pink`, `cyan`, `gold`) into hex codes natively.
    - Instant WCAG AA / AAA compliance rating badges and one-click contrast suggestion fixes.
 
-4. **🌈 Colorblind-Safe Palettes & Image Extractor**:
-   - Extract 5 dominant colorblind-analyzed colors from any uploaded photo or UI mockup.
-   - Includes preset accessible design system themes (*Warm*, *Cool*, *Earth*, *Ocean*, *Neon*).
-
-5. **📄 Document Reader & OCR**:
+4. **📄 Document Reader & OCR**:
    - Printed text extraction from uploaded document photos using image processing and Web SpeechSynthesis read-aloud TTS.
 
-6. **✨ Image Daltonizer**:
-   - Spectral hue shifting filters enhancing hard-to-see color contrasts.
-
-7. **👁️ Vision Simulator Lenses**:
+5. **👁️ Vision Simulator Lenses**:
    - Real-time colorblindness simulation filters (*EnChroma*, *Protanopia*, *Deuteranopia*, *Tritanopia*, *Monochromacy*).
 
 ---
