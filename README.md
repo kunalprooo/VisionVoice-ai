@@ -2,7 +2,7 @@
 
 > **Hear Colors. See the Unseen.**  
 > A web-based 3D accessibility platform built for 300M+ colorblind and visually impaired individuals worldwide.
-> **GitHub Repository**: [github.com/kunalprooo/VisionVoice-ai](https://github.com/kunalprooo/VisionVoice-ai)
+> **GitHub Repository**: [github.com/kunalprooo/VisionVoice-ai](https://github.com/googetaa/VisionVoice-ai)
 
 ---
 
