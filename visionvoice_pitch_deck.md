@@ -74,7 +74,7 @@
 5. **🔤 Space Grotesk & Obsidian Teal**: WCAG-compliant glassmorphism design system.
 6. **💾 HTML5 Web Storage API**: LocalStorage preference & theme persistence.
 7. **🐍 Python HTTP Micro-Server**: Fast, zero-dependency static server hosting (`server.py`).
-8. **🐙 Git & GitHub Pipeline**: Version control hosted at `github.com/kunalprooo/VisionVoice-ai`.
+8. **🐙 Git & GitHub Pipeline**: Version control hosted at `github.com/googetaa/VisionVoice-ai`.
 
 > 🎤 **Presenter Script (30s)**:  
 > *"VisionVoice AI is powered by 8 production tools and native Web APIs. By combining WebGL 3D rendering with Web Audio frequency synthesis, we achieve a 100% serverless, zero-latency accessibility suite."*
@@ -112,7 +112,7 @@
 ### Header: Experience VisionVoice AI Today
 **Subtitle**: Building an Inclusive Web for Everyone
 
-* **💻 GitHub Repository**: [`github.com/kunalprooo/VisionVoice-ai`](https://github.com/kunalprooo/VisionVoice-ai)
+* **💻 GitHub Repository**: [`github.com/googetaa/VisionVoice-ai`](https://github.com/googetaa/VisionVoice-ai)
 * **🚀 Live Demo Server**: `http://localhost:8000`
 * **📄 Production Stack**: 8 Native Web Engines & Tools
 
